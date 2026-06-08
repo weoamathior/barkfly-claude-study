@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Exhibit 5 — Query String Handoff')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar(${portalOrigin})}"></header>
+
+<main>
+  <div class="crumbs"><a th:href="@{/}">Zoo</a> / Exhibit #5</div>
+  <h1 th:text="${ex.title()}">Query String Handoff</h1>
+  <p class="subtitle" th:text="${ex.tagline()}">tagline</p>
+
+  <div class="section two-col">
+    <div class="why-good">
+      <h2>Why enterprises do this</h2>
+      <p>App A needs to tell App B "the user picked Mission Pharmacy." The fastest
+      thing that works: put it in the link. <code>?accountId=ACC-A&amp;role=ADMIN</code>
+      and you're done — no backend, no shared store.</p>
+    </div>
+    <div class="why-bad">
+      <h2>Why it hurts</h2>
+      <ul>
+        <li>Sensitive data lands in browser history, server logs, referrers, and chat messages.</li>
+        <li>Brittle, undocumented param names drift between apps.</li>
+        <li>Unencoded values (<code>&amp;</code>, spaces) corrupt the whole query string.</li>
+        <li>A copied URL <strong>replays old context</strong> forever — no expiry.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===================== BAD ===================== -->
+  <div class="section demo-bad">
+    <h2><span class="tag-bad">BAD</span> — Context (and secrets) in the query string</h2>
+    <div class="controls">
+      <label class="toggle"><input type="checkbox" id="badTricky"/> Use a tricky account name (<code>Mission &amp; Valley</code>)</label>
+    </div>
+    <div class="controls">
+      <button type="button" data-bad="gen" class="primary">Generate handoff URL</button>
+      <button type="button" data-bad="open">Open target app with URL</button>
+      <button type="button" data-bad="replay">Replay the copied URL later</button>
+    </div>
+    <div class="statusline" id="badUrl" style="word-break:break-all;">URL: (none yet)</div>
+    <div class="statusline" id="badTarget">Target app: nothing received.</div>
+  </div>
+
+  <!-- ===================== BETTER ===================== -->
+  <div class="section demo-good">
+    <h2><span class="tag-good">BETTER</span> — Opaque, short-lived, single-use handoff id</h2>
+    <div class="controls">
+      <button type="button" data-good="gen" class="primary">Create server-side handoff</button>
+      <button type="button" data-good="open">Open target app with id</button>
+      <button type="button" data-good="replay">Replay the copied URL later</button>
+    </div>
+    <div class="statusline" id="goodUrl" style="word-break:break-all;">URL: (none yet)</div>
+    <div class="statusline" id="goodTarget">Target app: nothing received.</div>
+    <p class="note">The URL carries only an opaque id. The real context lives
+      server-side for 30s and can be exchanged <strong>once</strong>.</p>
+  </div>
+
+  <div class="section">
+    <h2>Reset</h2>
+    <div class="controls"><button type="button" data-reset class="danger">Reset exhibit</button></div>
+  </div>
+
+  <div class="section">
+    <h2>Scripted walkthrough</h2>
+    <ol class="walkthrough">
+      <li>BAD: <em>Generate handoff URL</em> and read it — the account id, role, and a fake token are right there in the link (and in the log, like a real access log).</li>
+      <li>BAD: Tick <em>tricky account name</em>, regenerate, then <em>Open target app</em>: the unencoded <code>&amp;</code> <strong>corrupts</strong> the parsed context.</li>
+      <li>BAD: <em>Replay the copied URL later</em> — stale context is happily accepted again. Nothing expires.</li>
+      <li>BETTER: <em>Create server-side handoff</em> (URL is just an opaque id), <em>Open target app</em> (works once), then <em>Replay</em> → a clear <strong>expired/used</strong> error.</li>
+    </ol>
+  </div>
+
+  <div th:replace="~{fragments/layout :: logpanel('log')}"></div>
+</main>
+
+<script th:src="@{/js/exhibits/querystring.js}" defer></script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<!--
+  Reusable chrome fragments shared by every page. Plain Thymeleaf fragment
+  inclusion (no layout dialect dependency) keeps the scaffold boring.
+-->
+<head th:fragment="head(title)">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title th:text="${title}">Frontend Integration Zoo</title>
+  <link rel="stylesheet" th:href="@{/css/zoo.css}"/>
+  <script th:src="@{/js/log.js}" defer></script>
+</head>
+
+<body>
+<!-- Top bar: shows which origin THIS page is served from, which matters a lot
+     once iframes and postMessage enter the picture. -->
+<header class="topbar" th:fragment="topbar(origin)">
+  <span class="brand">🦓 Frontend Integration Zoo</span>
+  <span class="origin-badge" th:text="${origin}">http://localhost:8080</span>
+  <span class="spacer"></span>
+  <a th:href="@{/}">Home</a>
+</header>
+
+<!-- The structured event log panel, wired up by log.js + per-exhibit script. -->
+<div th:fragment="logpanel(id)" class="section">
+  <h2>Event Log</h2>
+  <p class="note">Every cross-boundary action shows up here: timestamp · actor app · event type · correlation id · payload preview.</p>
+  <div class="logpanel" th:id="${id}">
+    <div class="loghead">
+      <span class="ttl">📜 Observability-lite</span>
+      <span class="spacer"></span>
+      <button type="button" data-log-clear>Clear log</button>
+    </div>
+    <div class="logbody">
+      <div class="empty-log">No events yet. Run the demo above.</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

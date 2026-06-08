@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Exhibit 4 — Shared localStorage')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar(${portalOrigin})}"></header>
+
+<main th:attr="data-portal-origin=${portalOrigin}">
+  <div class="crumbs"><a th:href="@{/}">Zoo</a> / Exhibit #4</div>
+  <h1 th:text="${ex.title()}">Shared localStorage / sessionStorage</h1>
+  <p class="subtitle" th:text="${ex.tagline()}">tagline</p>
+
+  <div class="section two-col">
+    <div class="why-good">
+      <h2>Why enterprises do this</h2>
+      <p>Two apps on the same origin can both reach <code>localStorage</code>, so it
+      becomes a tempting "shared bus": the account picker writes the selected
+      account, the orders app reads it. No backend changes, no API. Ship it.</p>
+    </div>
+    <div class="why-bad">
+      <h2>Why it hurts</h2>
+      <ul>
+        <li>It's an <em>implicit contract</em>: one app's shape change silently breaks the other.</li>
+        <li>No version, no expiry → stale data shows the <strong>wrong account's orders</strong>.</li>
+        <li>No defensive parsing → one bad value throws and breaks the reader.</li>
+        <li>Logout clears one app's keys, not the others' → ghost session.</li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="note section">Below, "Account Picker" and "Orders Viewer" stand in for
+    two separate apps that happen to share this origin's <code>localStorage</code>.</p>
+
+  <!-- ===================== BAD DEMO ===================== -->
+  <div class="section demo-bad">
+    <h2><span class="tag-bad">BAD</span> — Raw key, assumed shape, no expiry, partial logout</h2>
+    <div class="two-col">
+      <div>
+        <strong>🧾 Account Picker</strong>
+        <div class="controls">
+          <button type="button" data-bad="pick" data-id="ACC-A" data-name="Mission Pharmacy">Select Mission Pharmacy</button>
+          <button type="button" data-bad="pick" data-id="ACC-B" data-name="Valley Hospital">Select Valley Hospital</button>
+        </div>
+        <div class="controls">
+          <button type="button" data-bad="v1">Write legacy v1 shape</button>
+          <button type="button" data-bad="corrupt">Corrupt the value</button>
+          <button type="button" data-bad="logout">Logout (bad)</button>
+        </div>
+        <div class="statusline" id="badStore">localStorage["selectedAccount"] = (unset)</div>
+      </div>
+      <div>
+        <strong>📦 Orders Viewer</strong>
+        <div class="controls">
+          <button type="button" data-bad="read" class="primary">Refresh from storage</button>
+        </div>
+        <div class="statusline" id="badOrders">No orders loaded.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== BETTER DEMO ===================== -->
+  <div class="section demo-good">
+    <h2><span class="tag-good">BETTER</span> — Versioned envelope, expiry, defensive parse, clear-all logout</h2>
+    <div class="two-col">
+      <div>
+        <strong>🧾 Account Picker</strong>
+        <div class="controls">
+          <button type="button" data-good="pick" data-id="ACC-A" data-name="Mission Pharmacy">Select Mission Pharmacy</button>
+          <button type="button" data-good="pick" data-id="ACC-B" data-name="Valley Hospital">Select Valley Hospital</button>
+        </div>
+        <div class="controls">
+          <button type="button" data-good="expire">Write expired entry</button>
+          <button type="button" data-good="corrupt">Corrupt the value</button>
+          <button type="button" data-good="logout">Logout (better)</button>
+        </div>
+        <div class="statusline" id="goodStore">storage = (unset)</div>
+      </div>
+      <div>
+        <strong>📦 Orders Viewer</strong>
+        <div class="controls">
+          <button type="button" data-good="read" class="primary">Refresh from storage</button>
+        </div>
+        <div class="statusline" id="goodOrders">No orders loaded.</div>
+      </div>
+    </div>
+    <pre class="note" style="white-space:pre-wrap;">Envelope: { "version": 2, "owner": "account-picker", "ts": …, "expiresAt": …, "data": { "id": "…", "name": "…" } }</pre>
+  </div>
+
+  <!-- ===================== WALKTHROUGH ===================== -->
+  <div class="section">
+    <h2>Scripted walkthrough</h2>
+    <ol class="walkthrough">
+      <li>BAD: Select <em>Mission Pharmacy</em>, then <em>Refresh from storage</em> — orders load. Now click <em>Logout (bad)</em> and <em>Refresh</em> again: the orders are <strong>still there</strong> (ghost session).</li>
+      <li>BAD: Click <em>Write legacy v1 shape</em>, then <em>Refresh</em>: the reader assumed <code>.id</code> and gets the <strong>wrong/empty result</strong>.</li>
+      <li>BAD: Click <em>Corrupt the value</em>, then <em>Refresh</em>: the reader <strong>throws</strong> and the panel breaks.</li>
+      <li>BETTER: Repeat each step. Expired/corrupt/old-version values are detected and reported; <em>Logout (better)</em> clears everything.</li>
+    </ol>
+  </div>
+
+  <div class="controls section">
+    <button type="button" data-reset class="danger">Reset exhibit (clear all storage + log)</button>
+  </div>
+
+  <div th:replace="~{fragments/layout :: logpanel('log')}"></div>
+</main>
+
+<script th:src="@{/js/exhibits/localstorage.js}" defer></script>
+</body>
+</html>

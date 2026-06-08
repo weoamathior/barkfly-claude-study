@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Exhibit 1 — Portal Shell + Iframe')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar(${portalOrigin})}"></header>
+
+<main th:attr="data-child-origin=${childOrigin}">
+  <div class="crumbs"><a th:href="@{/}">Zoo</a> / Exhibit #1</div>
+  <h1 th:text="${ex.title()}">Portal Shell + Iframe Legacy App</h1>
+  <p class="subtitle" th:text="${ex.tagline()}">tagline</p>
+
+  <div class="section two-col">
+    <div class="why-good">
+      <h2>Why enterprises do this</h2>
+      <p>The portal team can't rewrite the 2014 orders app, so they wrap it in an
+      iframe and ship "integration" in an afternoon. Two apps, one URL bar,
+      everyone's happy at the demo.</p>
+    </div>
+    <div class="why-bad">
+      <h2>Why it hurts</h2>
+      <ul>
+        <li>Hardcoded child URL; no load or error handling — failures are <em>silent blank frames</em>.</li>
+        <li>Fixed height clips content and creates a scroll-trap.</li>
+        <li>No visible ownership boundary — users don't know they crossed into another app.</li>
+        <li>Back button and "open in new tab" behave unpredictably.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===================== BAD DEMO ===================== -->
+  <div class="section demo-bad">
+    <h2><span class="tag-bad">BAD</span> — Hardcoded iframe, no wrapper</h2>
+    <p class="note">Hardcoded <code>src</code>, fixed 120px height, no load/error/latency handling.</p>
+    <div class="controls">
+      <button type="button" data-bad="load" class="primary">Load legacy app (bad wrapper)</button>
+    </div>
+    <div style="margin-top:10px;">
+      <iframe id="badFrame" class="app" style="height:120px;" title="legacy orders (bad)"></iframe>
+    </div>
+    <div class="statusline" id="badStatus">Nothing loaded.</div>
+  </div>
+
+  <!-- ===================== BETTER DEMO ===================== -->
+  <div class="section demo-good">
+    <h2><span class="tag-good">BETTER</span> — Wrapper with boundary, load/error/timeout states</h2>
+    <p class="note">Visible app boundary, spinner while loading, waits for a
+      <code>CHILD_READY</code> handshake from the allowed origin, and shows a real
+      error state on failure or timeout.</p>
+    <div class="controls">
+      <button type="button" data-good="load" class="primary">Load legacy app (better wrapper)</button>
+    </div>
+    <div class="frame-wrap bounded" data-app="legacy-orders-app @ :8081" style="margin-top:14px;">
+      <div id="goodSpinner" class="statusline" style="display:none;">⏳ Loading legacy app…</div>
+      <div id="goodError" class="statusline" style="display:none; color:var(--bad);"></div>
+      <iframe id="goodFrame" class="app" style="height:280px; display:none;" title="legacy orders (better)"></iframe>
+    </div>
+    <div class="note" style="margin-top:8px;">
+      <strong>Integration contract:</strong> child must post
+      <code>{type:'CHILD_READY', source:'legacy-orders-app'}</code> from
+      <span class="kbd" th:text="${childOrigin}">:8081</span> within 5s of load.
+    </div>
+  </div>
+
+  <!-- ===================== TOGGLES ===================== -->
+  <div class="section">
+    <h2>Toggles</h2>
+    <div class="toggles">
+      <label class="toggle"><input type="radio" name="scenario" value="normal" checked/> Normal</label>
+      <label class="toggle"><input type="radio" name="scenario" value="slow"/> Slow load (server delay)</label>
+      <label class="toggle"><input type="radio" name="scenario" value="fail"/> Backend 500 (no handshake)</label>
+    </div>
+    <p class="note">Pick a scenario, then click a Load button above. Watch how the
+      two wrappers react differently to the same failure.</p>
+    <div class="controls">
+      <button type="button" data-reset class="danger">Reset exhibit</button>
+    </div>
+  </div>
+
+  <!-- ===================== WALKTHROUGH ===================== -->
+  <div class="section">
+    <h2>Scripted walkthrough</h2>
+    <ol class="walkthrough">
+      <li>Select <strong>Backend 500</strong>, then click <em>Load legacy app (bad wrapper)</em>. Observe: a blank/broken frame, no explanation. The log shows the wrapper set <code>src</code> and then… nothing.</li>
+      <li>Click <em>Load legacy app (better wrapper)</em> with the same scenario. Observe: spinner, then a clear <strong>error state</strong> when the handshake times out.</li>
+      <li>Switch to <strong>Slow load</strong> and load both. The bad frame is blank during the delay; the better frame shows a spinner.</li>
+      <li>Switch to <strong>Normal</strong>: both load, but only the better one shows the app boundary and isn't clipped at 120px.</li>
+    </ol>
+  </div>
+
+  <div th:replace="~{fragments/layout :: logpanel('log')}"></div>
+
+  <p class="note">Note: the child app is served from a genuinely different origin
+    (<span class="kbd" th:text="${childOrigin}">:8081</span>), so the
+    <code>CHILD_READY</code> origin check in the better wrapper is real.</p>
+</main>
+
+<script th:src="@{/js/exhibits/iframe.js}" defer></script>
+</body>
+</html>

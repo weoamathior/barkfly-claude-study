@@ -1,0 +1,16 @@
+server:
+  port: 8080            # the Unified Portal (parent shell)
+
+zoo:
+  portal-origin: "http://localhost:8080"
+  child-origin: "http://localhost:8081"   # embedded legacy / child apps
+
+spring:
+  thymeleaf:
+    cache: false        # learning lab: edit templates and refresh
+  application:
+    name: frontend-integration-zoo
+
+logging:
+  level:
+    org.springframework.web: INFO

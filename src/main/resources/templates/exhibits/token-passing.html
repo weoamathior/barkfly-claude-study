@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Exhibit 8 — Token Passing Anti-pattern')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar(${portalOrigin})}"></header>
+
+<main>
+  <div class="crumbs"><a th:href="@{/}">Zoo</a> / Exhibit #8</div>
+  <h1 th:text="${ex.title()}">Token Passing Anti-pattern</h1>
+  <p class="subtitle" th:text="${ex.tagline()}">tagline</p>
+
+  <div class="section two-col">
+    <div class="why-good">
+      <h2>Why enterprises do this</h2>
+      <p>The child app needs to know who you are, so the portal just hands it the
+      token — in the URL, in <code>localStorage</code>, wherever's easy. And
+      since the token says <code>role=ADMIN</code>, the child trusts it.</p>
+    </div>
+    <div class="why-bad">
+      <h2>Why it hurts</h2>
+      <ul>
+        <li>Tokens in URLs leak into history, logs, and referrers.</li>
+        <li>Tokens in <code>localStorage</code> are readable by any script (XSS = game over).</li>
+        <li>Tokens logged to the console end up in screen-shares and bug reports.</li>
+        <li>Trusting a client-supplied role lets anyone become ADMIN by editing a value.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===================== BAD ===================== -->
+  <div class="section demo-bad">
+    <h2><span class="tag-bad">BAD</span> — Token in URL + localStorage + console, client-trusted role</h2>
+    <div class="controls">
+      <label class="toggle">Login as:
+        <select id="badUser">
+          <option value="USR-1" data-role="ACCOUNT_MANAGER">Dana (Account Manager)</option>
+          <option value="USR-2" data-role="ADMIN">Priya (Admin)</option>
+        </select>
+      </label>
+      <button type="button" data-bad="login" class="primary">Login (bad)</button>
+      <label class="toggle"><input type="checkbox" id="badTamper"/> Tamper: force <code>role=ADMIN</code> in URL</label>
+    </div>
+    <div class="statusline" id="badUrl" style="word-break:break-all;">Child URL: —</div>
+    <div class="controls">
+      <button type="button" data-bad="open">Open child app</button>
+      <button type="button" data-bad="admin">Child: do ADMIN action</button>
+    </div>
+    <div class="statusline" id="badChild">Child app: not opened.</div>
+  </div>
+
+  <!-- ===================== BETTER ===================== -->
+  <div class="section demo-good">
+    <h2><span class="tag-good">BETTER</span> — BFF-issued opaque session, server-enforced role</h2>
+    <div class="controls">
+      <label class="toggle">Login as:
+        <select id="goodUser">
+          <option value="USR-1">Dana (Account Manager)</option>
+          <option value="USR-2">Priya (Admin)</option>
+        </select>
+      </label>
+      <button type="button" data-good="login" class="primary">Login via BFF</button>
+      <button type="button" data-good="open">Load child context</button>
+      <button type="button" data-good="admin">Child: do ADMIN action</button>
+    </div>
+    <div class="statusline" id="goodSid" style="word-break:break-all;">BFF session: —</div>
+    <div class="statusline" id="goodChild">Child context: —</div>
+    <p class="note">No token in the URL or <code>localStorage</code>. The child fetches a
+      minimal context, and the role comes from the <strong>server's</strong> view of the user —
+      editing client values changes nothing.</p>
+  </div>
+
+  <div class="section">
+    <h2>Reset</h2>
+    <div class="controls"><button type="button" data-reset class="danger">Reset exhibit</button></div>
+  </div>
+
+  <div class="section">
+    <h2>Scripted walkthrough</h2>
+    <ol class="walkthrough">
+      <li>BAD: Login as <em>Dana (Account Manager)</em>. Note the token sitting in the URL, in <code>localStorage</code>, and printed to the console/log.</li>
+      <li>BAD: Tick <em>Tamper: force role=ADMIN</em>, <em>Open child app</em>, then <em>do ADMIN action</em>: the child trusts the URL and grants admin to a non-admin. 🔓</li>
+      <li>BETTER: Login as <em>Dana</em> via BFF — only an opaque session id exists. <em>Load child context</em> shows role <code>ACCOUNT_MANAGER</code> (from the server).</li>
+      <li>BETTER: <em>do ADMIN action</em> → the server returns <strong>403</strong>. Switch to <em>Priya (Admin)</em> and it's allowed. The client can't escalate.</li>
+    </ol>
+  </div>
+
+  <div th:replace="~{fragments/layout :: logpanel('log')}"></div>
+</main>
+
+<script th:src="@{/js/exhibits/token-passing.js}" defer></script>
+</body>
+</html>

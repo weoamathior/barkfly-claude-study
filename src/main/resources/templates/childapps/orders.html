@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Legacy Orders App</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; color: #1a212b; }
+    .lh { display:flex; align-items:center; gap:8px; border-bottom:2px solid #d0d7de; padding-bottom:8px; margin-bottom:12px; }
+    .lh .logo { font-weight:700; color:#7a4dff; }
+    .lh .tag { font-size:11px; color:#888; font-family:monospace; }
+    table { width:100%; border-collapse: collapse; font-size:14px; }
+    th, td { text-align:left; padding:6px 8px; border-bottom:1px solid #eaeef2; }
+    th { color:#57606a; font-weight:600; }
+    .status { font-size:12px; padding:1px 8px; border-radius:999px; }
+    .SHIPPED { background:#e6f6ec; color:#1a7f37; }
+    .PROCESSING { background:#fff4e0; color:#9a6700; }
+    .CANCELLED { background:#ffeef0; color:#cf222e; }
+    .foot { margin-top:14px; font-size:11px; color:#999; font-family:monospace; }
+  </style>
+</head>
+<body>
+<div class="lh">
+  <span class="logo">OrderTrak 3.1</span>
+  <span class="tag">legacy-orders-app · est. 2014</span>
+</div>
+
+<p style="font-size:13px;">Orders for <strong th:text="${account.name()}">Mission Pharmacy</strong>
+  (<span th:text="${account.id()}">ACC-A</span>)</p>
+
+<table>
+  <thead>
+  <tr><th>Order</th><th>Status</th><th>Total</th><th>Lines</th></tr>
+  </thead>
+  <tbody>
+  <tr th:each="o : ${orders}">
+    <td th:text="${o.id()}">ORD-10001</td>
+    <td><span class="status" th:classappend="${o.status()}" th:text="${o.status()}">SHIPPED</span></td>
+    <td th:text="${o.total()}">$0</td>
+    <td th:text="${#strings.listJoin(o.lines(), ', ')}">items</td>
+  </tr>
+  </tbody>
+</table>
+
+<div class="foot">Rendered by OrderTrak. If you can read this, the iframe loaded.</div>
+
+<script th:inline="javascript">
+  // The legacy app announces it loaded successfully. A well-built parent wrapper
+  // listens for this to distinguish "loaded" from "blank/broken". targetOrigin
+  // is '*' for the ping itself — the PARENT is responsible for validating the
+  // sender's origin when it receives this.
+  var PORTAL = /*[[${portalOrigin}]]*/ 'http://localhost:8080';
+  try {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'CHILD_READY', source: 'legacy-orders-app' }, '*');
+    }
+  } catch (e) { /* no parent / blocked */ }
+</script>
+</body>
+</html>

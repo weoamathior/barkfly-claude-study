@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Exhibit 2 — postMessage Communication')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar(${portalOrigin})}"></header>
+
+<main th:attr="data-child-origin=${childOrigin},data-portal-origin=${portalOrigin}">
+  <div class="crumbs"><a th:href="@{/}">Zoo</a> / Exhibit #2</div>
+  <h1 th:text="${ex.title()}">postMessage Communication</h1>
+  <p class="subtitle" th:text="${ex.tagline()}">tagline</p>
+
+  <div class="section two-col">
+    <div class="why-good">
+      <h2>Why enterprises do this</h2>
+      <p>The portal and the embedded app live on different origins, so they can't
+      share memory or call each other directly. <code>postMessage</code> is the
+      one sanctioned channel — so everything gets crammed through it, usually
+      without a contract.</p>
+    </div>
+    <div class="why-bad">
+      <h2>Why it hurts</h2>
+      <ul>
+        <li><code>postMessage(payload, '*')</code> and a handler that trusts <em>any</em> origin → spoofable.</li>
+        <li>Loosely-typed payloads, no version, no schema validation.</li>
+        <li>No correlation ID → can't match a reply to its request.</li>
+        <li>No timeout → a silent child hangs the feature forever.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- shared child iframe used by both demos -->
+  <div class="section">
+    <h2>Embedded legacy app</h2>
+    <div class="frame-wrap bounded" data-app="legacy-orders-app @ :8081">
+      <iframe id="childFrame" class="app" style="height:150px;" title="legacy orders messaging"></iframe>
+    </div>
+    <div class="controls">
+      <label class="toggle">Order:
+        <select id="orderSelect">
+          <option>ORD-10001</option>
+          <option>ORD-10002</option>
+          <option>ORD-10003</option>
+          <option>ORD-10004</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <!-- ===================== BAD DEMO ===================== -->
+  <div class="section demo-bad">
+    <h2><span class="tag-bad">BAD</span> — Wildcard origin, untyped, no correlation, no timeout</h2>
+    <div class="controls">
+      <button type="button" data-bad="request" class="primary">Request order (bad)</button>
+      <button type="button" data-bad="spoof" class="danger">Inject spoofed reply (fake "attacker")</button>
+    </div>
+    <div class="statusline" id="badOut">No order loaded.</div>
+    <p class="note">The bad handler accepts the spoofed message because it never
+      checks <code>event.origin</code> — so an attacker page can feed the portal a fake order.</p>
+  </div>
+
+  <!-- ===================== BETTER DEMO ===================== -->
+  <div class="section demo-good">
+    <h2><span class="tag-good">BETTER</span> — Typed envelope, origin allowlist, correlation ID, timeout, schema check</h2>
+    <div class="controls">
+      <button type="button" data-good="request" class="primary">Request order (better)</button>
+    </div>
+    <div class="statusline" id="goodOut">No order loaded.</div>
+    <pre class="note" style="white-space:pre-wrap;">Envelope: {
+  "type": "ORDER_DETAILS_REQUEST",
+  "version": "1.0",
+  "correlationId": "&lt;generated&gt;",
+  "source": "unified-portal",
+  "payload": { "orderId": "…" }
+}</pre>
+  </div>
+
+  <!-- ===================== TOGGLES ===================== -->
+  <div class="section">
+    <h2>Toggles</h2>
+    <div class="toggles">
+      <label class="toggle"><input type="checkbox" id="tDrop"/> Simulate dropped response (force timeout)</label>
+      <label class="toggle"><input type="checkbox" id="tGarbage"/> Simulate malformed reply (fail schema check)</label>
+    </div>
+    <p class="note">These affect the <em>better</em> request so you can watch the
+      timeout and schema validation do their jobs. The bad request has no such defenses.</p>
+    <div class="controls">
+      <button type="button" data-reset class="danger">Reset exhibit</button>
+    </div>
+  </div>
+
+  <!-- ===================== WALKTHROUGH ===================== -->
+  <div class="section">
+    <h2>Scripted walkthrough</h2>
+    <ol class="walkthrough">
+      <li>Click <em>Request order (bad)</em> and <em>Request order (better)</em>. Both work — note the better one carries a <code>correlationId</code> in the log.</li>
+      <li>Click <em>Inject spoofed reply</em>. The <strong>bad</strong> output happily shows the attacker's fake order; the <strong>better</strong> handler logs <code>REJECTED_BAD_ORIGIN</code> and ignores it.</li>
+      <li>Tick <em>Simulate dropped response</em>, click <em>Request order (better)</em>: watch it hit a <strong>timeout</strong> instead of hanging forever. The bad request would just wait silently.</li>
+      <li>Tick <em>Simulate malformed reply</em>, click <em>Request order (better)</em>: the <strong>schema check</strong> rejects the corrupted payload.</li>
+    </ol>
+  </div>
+
+  <div th:replace="~{fragments/layout :: logpanel('log')}"></div>
+</main>
+
+<script th:src="@{/js/exhibits/postmessage.js}" defer></script>
+</body>
+</html>

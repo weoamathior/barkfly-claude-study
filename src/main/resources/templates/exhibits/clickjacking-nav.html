@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Exhibit 6 — Click Interception / Fake Navigation')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar(${portalOrigin})}"></header>
+
+<main>
+  <div class="crumbs"><a th:href="@{/}">Zoo</a> / Exhibit #6</div>
+  <h1 th:text="${ex.title()}">Click Interception / Fake Navigation</h1>
+  <p class="subtitle" th:text="${ex.tagline()}">tagline</p>
+
+  <div class="section two-col">
+    <div class="why-good">
+      <h2>Why enterprises do this</h2>
+      <p>To make several apps feel like "one product," the portal intercepts link
+      clicks and swaps content in place — no full page load, no flicker, URL
+      stays put. Looks seamless in the demo.</p>
+    </div>
+    <div class="why-bad">
+      <h2>Why it hurts</h2>
+      <ul>
+        <li>The URL no longer reflects where you are — bookmarks and sharing break.</li>
+        <li>The <strong>back button</strong> leaves the whole portal instead of going back one view.</li>
+        <li><strong>Open-in-new-tab</strong> / middle-click do nothing (href is <code>#</code>).</li>
+        <li>No breadcrumb / boundary — users don't know which app they're in.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===================== BAD ===================== -->
+  <div class="section demo-bad">
+    <h2><span class="tag-bad">BAD</span> — Intercept every click, swap content, never touch history</h2>
+    <div class="crumbs">You are here: <strong>Home</strong> <span class="note">(breadcrumb never updates)</span></div>
+    <nav id="badNav" class="controls">
+      <a href="#">Orders</a> · <a href="#">Invoices</a> · <a href="#">Support</a>
+    </nav>
+    <div class="frame-wrap" id="badView" style="min-height:90px; padding:14px;">Welcome to the portal home.</div>
+    <div class="controls">
+      <button type="button" data-bad="back">Press browser Back ⟵</button>
+    </div>
+    <div class="statusline" id="badStatus"></div>
+  </div>
+
+  <!-- ===================== BETTER ===================== -->
+  <div class="section demo-good">
+    <h2><span class="tag-good">BETTER</span> — Real links, pushState routes, breadcrumb, working back</h2>
+    <div class="crumbs" id="goodCrumb">You are here: <strong>Portal › Home</strong></div>
+    <nav id="goodNav" class="controls">
+      <a th:href="@{/exhibit/clickjacking-nav(view='orders')}" data-view="orders">Orders App</a> ·
+      <a th:href="@{/exhibit/clickjacking-nav(view='invoices')}" data-view="invoices">Invoices App</a> ·
+      <a th:href="@{/exhibit/clickjacking-nav(view='support')}" data-view="support">Support App</a>
+    </nav>
+    <div class="frame-wrap bounded" data-app="owned route" id="goodView" style="min-height:90px; padding:14px;">Welcome to the portal home.</div>
+    <div class="controls">
+      <button type="button" data-good="back">Press browser Back ⟵</button>
+    </div>
+    <p class="note">These are real <code>&lt;a href&gt;</code> links — middle-click / "open in
+      new tab" works, and each view pushes a history entry so Back returns one view.</p>
+  </div>
+
+  <div class="section">
+    <h2>Reset</h2>
+    <div class="controls"><button type="button" data-reset class="danger">Reset exhibit</button></div>
+  </div>
+
+  <div class="section">
+    <h2>Scripted walkthrough</h2>
+    <ol class="walkthrough">
+      <li>BAD: Click <em>Orders</em>, then <em>Invoices</em> — content swaps but the URL and breadcrumb never change. Now click <em>Press browser Back</em>: it leaves the exhibit entirely (no in-app history).</li>
+      <li>BAD: Try to middle-click / open a link in a new tab — nothing useful happens (the href is <code>#</code>).</li>
+      <li>BETTER: Click <em>Orders App</em> then <em>Invoices App</em> — the URL gains <code>?view=…</code> and the breadcrumb updates. <em>Press browser Back</em> returns you to Orders, then Home.</li>
+      <li>BETTER: Open a link in a new tab — it loads straight to that view (the route owns its URL).</li>
+    </ol>
+  </div>
+
+  <div th:replace="~{fragments/layout :: logpanel('log')}"></div>
+</main>
+
+<script th:src="@{/js/exhibits/clickjacking-nav.js}" defer></script>
+</body>
+</html>

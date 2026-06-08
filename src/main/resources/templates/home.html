@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Frontend Integration Zoo')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar(${portalOrigin})}"></header>
+
+<main>
+  <h1>The Frontend Integration Zoo</h1>
+  <p class="subtitle">
+    A hands-on lab of enterprise frontend integration patterns — the kind that
+    were a "temporary" shortcut in 2014 and are load-bearing today. Each exhibit
+    breaks on purpose, then shows a safer alternative.
+  </p>
+
+  <div class="section note">
+    <strong>Two real origins, one process.</strong>
+    The portal shell is served from <span class="kbd" th:text="${portalOrigin}">localhost:8080</span>
+    and the embedded "legacy" apps from <span class="kbd" th:text="${childOrigin}">localhost:8081</span>.
+    Your browser treats those as different origins, so the cross-origin pain in
+    these exhibits is real — not simulated.
+  </div>
+
+  <div class="grid">
+    <!-- Live exhibits link out; "coming soon" ones are dimmed and inert. -->
+    <a th:each="ex : ${exhibits}"
+       th:href="${ex.live()} ? @{'/exhibit/' + ${ex.slug()}} : '#'"
+       th:classappend="${ex.live()} ? 'live' : 'soon'"
+       class="card">
+      <span class="num" th:text="'Exhibit #' + ${ex.number()}">Exhibit #1</span>
+      <span class="badge" th:classappend="${ex.live()} ? 'live' : 'soon'"
+            th:text="${ex.live()} ? 'Live' : 'Coming soon'">Live</span>
+      <span class="title" th:text="${ex.title()}">Title</span>
+      <span class="tagline" th:text="${ex.tagline()}">tagline</span>
+    </a>
+  </div>
+</main>
+</body>
+</html>

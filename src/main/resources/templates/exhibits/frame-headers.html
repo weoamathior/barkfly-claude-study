@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Exhibit 9 — Iframe Security Headers / Clickjacking')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar(${portalOrigin})}"></header>
+
+<main th:attr="data-child-origin=${childOrigin}">
+  <div class="crumbs"><a th:href="@{/}">Zoo</a> / Exhibit #9</div>
+  <h1 th:text="${ex.title()}">Iframe Security Headers / Clickjacking</h1>
+  <p class="subtitle" th:text="${ex.tagline()}">tagline</p>
+
+  <div class="section">
+    <strong>Real vs simulated:</strong> the <code>frame-ancestors</code> /
+    <code>X-Frame-Options</code> enforcement below is <strong>real</strong> — your
+    browser actually refuses to render the blocked frame. The "attacker overlay"
+    is a <strong>simulation</strong> to illustrate the clickjacking idea safely.
+  </div>
+
+  <div class="section two-col">
+    <div class="why-good">
+      <h2>Why this tension exists</h2>
+      <p>Integration <em>wants</em> apps to embed each other freely. Security
+      <em>wants</em> to stop hostile pages from framing your app and tricking
+      users into clicks (clickjacking). Those goals collide in the framing headers.</p>
+    </div>
+    <div class="why-bad">
+      <h2>Why it hurts</h2>
+      <ul>
+        <li>No framing policy → any site can embed your app and overlay a deceptive UI.</li>
+        <li>Too strict (<code>DENY</code>) → your own portal can't embed it either.</li>
+        <li>The fix is an explicit <strong>allowlist</strong>, which integration teams often don't know to ask for.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===================== BAD ===================== -->
+  <div class="section demo-bad">
+    <h2><span class="tag-bad">BAD</span> — Unprotected page + attacker overlay (simulated clickjack)</h2>
+    <div class="controls">
+      <button type="button" data-bad="load" class="primary">Embed unprotected bank page</button>
+      <label class="toggle"><input type="checkbox" id="overlay"/> Show attacker overlay</label>
+    </div>
+    <div style="position:relative; margin-top:10px;">
+      <iframe id="badFrame" class="app" style="height:170px;" title="unprotected bank page"></iframe>
+      <div id="attacker" style="display:none; position:absolute; inset:0; background:rgba(120,40,160,.12);
+           border:2px dashed #c792ea; border-radius:6px; align-items:center; justify-content:center;">
+        <button style="background:#7a4dff;color:#fff;border:0;border-radius:8px;padding:12px 18px;cursor:pointer;">
+          🎁 You won! Click to claim your free prize
+        </button>
+      </div>
+    </div>
+    <p class="note">In a real clickjack the <em>victim</em> app is the invisible top
+      layer and the decoy is underneath — the user thinks they're claiming a prize
+      but actually clicks "Confirm transfer". Here the overlay is shown semi-transparent
+      so you can see the trick.</p>
+  </div>
+
+  <!-- ===================== BETTER ===================== -->
+  <div class="section demo-good">
+    <h2><span class="tag-good">BETTER</span> — Explicit framing policy (real enforcement)</h2>
+    <div class="controls">
+      <button type="button" data-good="allow" class="primary">Embed allowlisted page (frame-ancestors = portal)</button>
+      <button type="button" data-good="deny">Embed denied page (frame-ancestors 'none')</button>
+    </div>
+    <div class="frame-wrap bounded" data-app="BankCorp @ :8081" style="margin-top:10px;">
+      <iframe id="goodFrame" class="app" style="height:170px;" title="protected bank page"></iframe>
+    </div>
+    <div class="statusline" id="goodStatus"></div>
+    <p class="note">The allowlisted page embeds fine because the portal origin is
+      explicitly permitted. The denied page is refused by the browser — watch the
+      frame stay blank and check the devtools console for the CSP/X-Frame-Options error.</p>
+  </div>
+
+  <div class="section">
+    <h2>Reset</h2>
+    <div class="controls"><button type="button" data-reset class="danger">Reset exhibit</button></div>
+  </div>
+
+  <div class="section">
+    <h2>Scripted walkthrough</h2>
+    <ol class="walkthrough">
+      <li>BAD: <em>Embed unprotected bank page</em> — it frames with no complaint. Tick <em>Show attacker overlay</em> to see how a hostile page would deceive the user.</li>
+      <li>BETTER: <em>Embed allowlisted page</em> — it loads, because <code>frame-ancestors</code> names the portal origin.</li>
+      <li>BETTER: <em>Embed denied page</em> — the frame stays <strong>blank</strong>; the browser refused it. Open devtools console to see the real CSP refusal.</li>
+      <li>Reflect: the safe answer isn't "no framing" or "frame anything" — it's an explicit allowlist agreed between the apps.</li>
+    </ol>
+  </div>
+
+  <div th:replace="~{fragments/layout :: logpanel('log')}"></div>
+</main>
+
+<script th:src="@{/js/exhibits/frame-headers.js}" defer></script>
+</body>
+</html>

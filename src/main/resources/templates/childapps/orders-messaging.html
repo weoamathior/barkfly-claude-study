@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Legacy Orders App (messaging)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 14px; color:#1a212b; }
+    .lh { font-weight:700; color:#7a4dff; }
+    .tag { font-size:11px; color:#888; font-family:monospace; }
+    .feed { font-family: monospace; font-size: 12px; margin-top:10px; color:#57606a; }
+    .feed div { padding:1px 0; }
+  </style>
+</head>
+<body>
+<div class="lh">OrderTrak 3.1 <span class="tag">· request/response endpoint</span></div>
+<p style="font-size:13px;">I answer order-detail requests sent via <code>postMessage</code>.</p>
+<div class="feed" id="feed"><div>Waiting for requests…</div></div>
+
+<script th:inline="javascript">
+  // The legacy child app. It is deliberately LENIENT (it's old): it will pull an
+  // orderId out of whatever shape it's given and answer. The difference between
+  // the bad and better demos lives in how the PARENT sends and validates — but
+  // this child does do one sensible thing: it only talks to the portal origin.
+  var PORTAL = /*[[${portalOrigin}]]*/ 'http://localhost:8080';
+  var feed = document.getElementById('feed');
+  function note(t) {
+    var d = document.createElement('div');
+    d.textContent = '› ' + t;
+    feed.appendChild(d);
+  }
+
+  window.addEventListener('message', function (e) {
+    if (e.origin !== PORTAL) { note('ignored message from ' + e.origin); return; }
+    var m = e.data || {};
+    var orderId = (m.payload && m.payload.orderId) || m.orderId;
+    if (!orderId) return;
+
+    var typed = !!(m.type && m.correlationId);
+    var ctl = m.payload || {};
+
+    if (ctl.simulateDrop) {
+      note('received ' + orderId + ' — pretending to hang (no reply)');
+      return; // never respond -> parent must time out
+    }
+
+    note('lookup ' + orderId + (typed ? ' (typed, cid=' + m.correlationId + ')' : ' (untyped legacy)'));
+    fetch('/api/orders/' + encodeURIComponent(orderId))
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (order) {
+        if (typed) {
+          var payload = ctl.sendGarbage ? 'C0RRUPTED~~~' : { order: order };
+          e.source.postMessage({
+            type: 'ORDER_DETAILS_RESULT',
+            version: '1.0',
+            correlationId: m.correlationId,
+            source: 'legacy-orders-app',
+            payload: payload
+          }, e.origin); // reply only to the exact requesting origin
+        } else {
+          // legacy untyped reply: no type, no correlation id, wildcard target
+          e.source.postMessage({ order: order }, '*');
+        }
+      });
+  });
+</script>
+</body>
+</html>

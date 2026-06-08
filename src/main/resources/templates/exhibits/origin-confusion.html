@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Exhibit 10 — Runtime-Origin Confusion')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar(${portalOrigin})}"></header>
+
+<main th:attr="data-child-origin=${childOrigin},data-portal-origin=${portalOrigin}">
+  <div class="crumbs"><a th:href="@{/}">Zoo</a> / Exhibit #10</div>
+  <h1 th:text="${ex.title()}">Runtime-Origin Confusion</h1>
+  <p class="subtitle" th:text="${ex.tagline()}">tagline</p>
+
+  <div class="section two-col">
+    <div class="why-good">
+      <h2>Why enterprises do this</h2>
+      <p>On the developer's laptop, everything runs on <code>localhost:8080</code>.
+      So code reaches for <code>window.location.origin</code> as "the other app's
+      origin" and it just works — until staging and prod split the apps onto
+      different hosts.</p>
+    </div>
+    <div class="why-bad">
+      <h2>Why it hurts</h2>
+      <ul>
+        <li>"Works on my machine" — same-origin assumptions pass every local test.</li>
+        <li>In prod the apps are on different origins: <code>postMessage</code> targetOrigin
+        no longer matches and messages are silently dropped.</li>
+        <li>Origin checks written as <code>=== location.origin</code> reject the real partner.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Runtime diagnostics</h2>
+    <div class="statusline" id="diag"></div>
+  </div>
+
+  <div class="frame-wrap bounded" data-app="legacy-orders-app @ :8081" style="margin:0 0 18px;">
+    <iframe id="childFrame" class="app" style="height:130px;" title="messaging child"></iframe>
+  </div>
+
+  <!-- ===================== BAD ===================== -->
+  <div class="section demo-bad">
+    <h2><span class="tag-bad">BAD</span> — Assumes the child shares the portal's origin</h2>
+    <div class="controls">
+      <button type="button" data-bad="send" class="primary">Request order (targetOrigin = location.origin)</button>
+    </div>
+    <div class="statusline" id="badOut">No response yet.</div>
+    <p class="note">It posts to <code>window.location.origin</code> (the portal). The child
+      is on a different origin, so the browser drops the message — no error, no reply.</p>
+  </div>
+
+  <!-- ===================== BETTER ===================== -->
+  <div class="section demo-good">
+    <h2><span class="tag-good">BETTER</span> — Config-driven origin + allowlist + mismatch diagnostics</h2>
+    <div class="controls">
+      <button type="button" data-good="send" class="primary">Request order (targetOrigin = configured child origin)</button>
+      <button type="button" data-good="spoof">Simulate reply from an unexpected origin</button>
+    </div>
+    <div class="statusline" id="goodOut">No response yet.</div>
+    <p class="note">Origins come from environment config, replies are checked against an
+      explicit allowlist, and a mismatch produces a <strong>clear diagnostic</strong> instead of a silent drop.</p>
+  </div>
+
+  <div class="section">
+    <h2>Reset</h2>
+    <div class="controls"><button type="button" data-reset class="danger">Reset exhibit</button></div>
+  </div>
+
+  <div class="section">
+    <h2>Scripted walkthrough</h2>
+    <ol class="walkthrough">
+      <li>Read the diagnostics: the portal and child origins differ here (prod-like), so same-origin assumptions will break.</li>
+      <li>BAD: <em>Request order (targetOrigin = location.origin)</em> → no reply arrives; the browser silently dropped the message because the target origin didn't match the child.</li>
+      <li>BETTER: <em>Request order (configured child origin)</em> → it works, because the origin came from config, not an assumption.</li>
+      <li>BETTER: <em>Simulate reply from an unexpected origin</em> → a clear "origin not in allowlist" diagnostic, not a silent failure or a blind accept.</li>
+    </ol>
+  </div>
+
+  <div th:replace="~{fragments/layout :: logpanel('log')}"></div>
+</main>
+
+<script th:src="@{/js/exhibits/origin-confusion.js}" defer></script>
+</body>
+</html>
