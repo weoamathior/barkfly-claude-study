@@ -23,9 +23,9 @@ public class ExhibitsController {
     @GetMapping("/exhibit/{slug}")
     public String exhibit(@PathVariable String slug, Model model) {
         Exhibit ex = Exhibit.ALL.stream()
-                .filter(e -> e.slug().equals(slug) && e.live())
+                .filter(e -> e.slug().equals(slug))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("No live exhibit: " + slug));
+                .orElseThrow(() -> new IllegalArgumentException("No such exhibit: " + slug));
         model.addAttribute("ex", ex);
         model.addAttribute("portalOrigin", props.getPortalOrigin());
         model.addAttribute("childOrigin", props.getChildOrigin());

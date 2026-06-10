@@ -6,8 +6,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 /**
- * The Unified Portal home dashboard. Lists every exhibit; the live ones link to
- * their pages, the rest are flagged "coming soon".
+ * The Unified Portal home dashboard. Lists every exhibit and links to its page.
  */
 @Controller
 public class HomeController {

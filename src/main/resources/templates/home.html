@@ -21,14 +21,11 @@
   </div>
 
   <div class="grid">
-    <!-- Live exhibits link out; "coming soon" ones are dimmed and inert. -->
     <a th:each="ex : ${exhibits}"
-       th:href="${ex.live()} ? @{'/exhibit/' + ${ex.slug()}} : '#'"
-       th:classappend="${ex.live()} ? 'live' : 'soon'"
-       class="card">
+       th:href="@{'/exhibit/' + ${ex.slug()}}"
+       class="card live">
       <span class="num" th:text="'Exhibit #' + ${ex.number()}">Exhibit #1</span>
-      <span class="badge" th:classappend="${ex.live()} ? 'live' : 'soon'"
-            th:text="${ex.live()} ? 'Live' : 'Coming soon'">Live</span>
+      <span class="badge live">Live</span>
       <span class="title" th:text="${ex.title()}">Title</span>
       <span class="tagline" th:text="${ex.tagline()}">tagline</span>
     </a>

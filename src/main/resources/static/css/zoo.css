@@ -70,7 +70,6 @@ h1 { font-size: 26px; margin: 0 0 4px; }
   transition: border-color .15s, transform .15s;
 }
 .card.live:hover { border-color: var(--accent); transform: translateY(-2px); }
-.card.soon { opacity: .55; }
 .card .num {
   font-family: var(--mono);
   font-size: 12px;
@@ -87,7 +86,6 @@ h1 { font-size: 26px; margin: 0 0 4px; }
   border-radius: 999px;
 }
 .badge.live { background: rgba(87,209,140,.15); color: var(--good); }
-.badge.soon { background: rgba(147,161,177,.15); color: var(--muted); }
 
 /* ---- exhibit page ---- */
 .crumbs { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
